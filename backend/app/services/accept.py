@@ -58,4 +58,14 @@ class AcceptService:
         entry["status"] = target
         entry["pending"] = target != STATUS_ORDER[-1]
         entry["abnormal"] = action in NEGATIVE_ACTIONS
+        if action == "确认通过":
+            # 验收结论按任务编号落到检修任务汇总台账
+            from app.services.maintjob import service as maintjob_service
+
+            maintjob_service.apply_accept_conclusion(
+                str(entry.get("关联任务") or ""), str(entry.get("验收结论") or "验收通过")
+            )
         return entry, f"验收单已{action}"
+
+
+service = AcceptService()
