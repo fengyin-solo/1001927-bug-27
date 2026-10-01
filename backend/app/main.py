@@ -5,14 +5,25 @@
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import ROUTERS
+from app.services.maintjob import MaintjobService
 from app.store import store
 
-app = FastAPI(title="风电场机组运维平台", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # 存量检修任务按当时口径回填派发记录与汇总台账，仅执行一次
+    MaintjobService().backfill_legacy()
+    yield
+
+
+app = FastAPI(title="风电场机组运维平台", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
